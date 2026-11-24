@@ -34,7 +34,7 @@ export function BpmCard({ s, actions }: { s: UiState; actions: Actions }) {
   const show = (b: number) => b;
   const chosen = s.bpmChoice ?? t?.bpm;
   return (
-    <Card className="flex w-[200px] shrink-0 flex-col">
+    <Card className="flex w-full shrink-0 flex-col md:w-[200px]">
       <Cap right={t && <span className="text-white/50">{label}</span>}>tempo</Cap>
       {t && bpm ? (
         <>
@@ -52,7 +52,7 @@ export function BpmCard({ s, actions }: { s: UiState; actions: Actions }) {
             {s.bpmChoice !== null && ' · your pick'}
             {s.fx.halftime && <span className="text-white"> · halftime feel</span>}
           </div>
-          <div className="mt-auto grid gap-px overflow-hidden rounded-[4px] border border-white/10 bg-white/10" style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)` }}>
+          <div className="mt-3 grid gap-px overflow-hidden rounded-[4px] border border-white/10 bg-white/10 md:mt-auto" style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)` }}>
             {options.map((o) => {
               const on = o === chosen;
               const tag = o === t.bpm ? 'detected' : o < t.bpm ? 'half' : 'double';
@@ -141,7 +141,7 @@ export function KeyCard({ s, actions }: { s: UiState; actions: Actions }) {
         {exploring ? 'exploring key' : 'key'}
       </Cap>
       {k && a ? (
-        <div className="flex min-h-0 flex-1 gap-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 sm:flex-row">
           <div className="flex min-w-0 flex-1 flex-col">
             <div key={keyName(k)} className="flex items-baseline gap-2 [animation:amari-rise_350ms_ease-out]">
               <span className="truncate text-[30px] font-bold leading-none tracking-[-0.05em] text-white [text-shadow:0_0_22px_rgba(255,255,255,0.3)]">
@@ -172,7 +172,7 @@ export function KeyCard({ s, actions }: { s: UiState; actions: Actions }) {
                 )}
               </>
             )}
-            <div className="mt-auto">
+            <div className="mt-3 sm:mt-auto">
               <div className="mb-1 text-[8px] tracking-[0.1em] text-white/30">chords that fit</div>
               <div className="flex flex-wrap gap-1">
                 {scaleChords(k).map((c) => (
@@ -211,9 +211,9 @@ export function CompatibleKeys({ s, actions }: { s: UiState; actions: Actions })
         <span>
           <span className="text-white/20">// </span>keys that mix with it{det ? ` · ${keyName(det)}` : ''}
         </span>
-        {det && <span className="text-white/30">click a key to see its scale & chords</span>}
+        {det && <span className="hidden text-white/30 sm:inline">click a key to see its scale & chords</span>}
       </div>
-      <div className="grid grid-cols-6 gap-1.5">
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-6">
         {det
           ? relatedKeys(det).map((r) => {
               const on = sameKey(s.focusKey, r.key);

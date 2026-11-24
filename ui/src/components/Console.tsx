@@ -19,11 +19,13 @@ export function Console({ state }: { state: UiState }) {
   }, [last, busy, linger]);
 
   const show = !!last && (busy || Math.max(now, performance.now()) - last.t < linger);
+  // phones: the log would cover the waveform — only show it when something went wrong
+  const hasError = state.logs.slice(-VISIBLE).some((l) => l.text.startsWith('!'));
   const lines = state.logs.slice(-VISIBLE);
 
   return (
     <div
-      className={`ml-auto w-[300px] rounded-[4px] text-[9.5px] border border-white/10 bg-ash-950/90 px-3 py-2 text-[10px] leading-[1.55] shadow-[0_10px_30px_rgba(0,0,0,0.7)] backdrop-blur-sm transition-opacity duration-500 ${
+      className={`${hasError ? '' : 'hidden md:block'} ml-auto w-[300px] max-w-full rounded-[4px] text-[9.5px] border border-white/10 bg-ash-950/90 px-3 py-2 text-[10px] leading-[1.55] shadow-[0_10px_30px_rgba(0,0,0,0.7)] backdrop-blur-sm transition-opacity duration-500 ${
         show ? 'opacity-100' : 'opacity-0'
       }`}
     >

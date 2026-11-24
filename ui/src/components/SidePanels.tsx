@@ -15,14 +15,14 @@ export function SourcePanel({ s, actions }: { s: UiState; actions: Actions }) {
       <button
         disabled={busy}
         onClick={() => input.current?.click()}
-        className="group flex h-[92px] w-full flex-col items-center justify-center gap-1.5 rounded-[6px] border border-dashed border-white/20 bg-ash-900/50
+        className="group flex h-[76px] w-full flex-col md:h-[92px] items-center justify-center gap-1.5 rounded-[6px] border border-dashed border-white/20 bg-ash-900/50
                    text-center transition-colors hover:border-white/50 hover:bg-white/[0.04] disabled:cursor-wait disabled:opacity-50"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" className="text-white/60 transition-transform group-hover:-translate-y-0.5">
           <path d="M10 13V3m0 0L6 7m4-4 4 4M3 13v3h14v-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span className="text-[11px] font-semibold text-white/80">drop audio anywhere</span>
-        <span className="text-[9px] text-white/35">or click to browse · wav mp3 aiff flac m4a</span>
+        <span className="text-[11px] font-semibold text-white/80"><span className="hidden md:inline">drop audio anywhere</span><span className="md:hidden">tap to choose a sample</span></span>
+        <span className="text-[9px] text-white/35"><span className="hidden md:inline">or click to browse · </span>wav mp3 aiff flac m4a</span>
       </button>
       <input
         ref={input}
@@ -80,14 +80,14 @@ export function ExportPanel({ s, actions }: { s: UiState; actions: Actions }) {
           onDragStart={(e) => actions.exportSample(e.dataTransfer)}
           onClick={() => actions.exportSample()}
           title="Drag into your DAW or Finder (click to download) — renamed with key + BPM"
-          className="flex h-10 flex-1 items-center gap-2.5 rounded-[4px] bg-white px-3 text-black transition-all
+          className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-[4px] bg-white px-3 text-black transition-all
                      enabled:cursor-grab enabled:hover:shadow-[0_0_24px_rgba(255,255,255,0.35)] active:cursor-grabbing
                      disabled:cursor-not-allowed disabled:bg-white/[0.06] disabled:text-white/25"
         >
           <svg width="8" height="14" viewBox="0 0 8 14">
             {[1.5, 6.5].map((x) => [2, 7, 12].map((y) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.3" fill="currentColor" />))}
           </svg>
-          <span className="text-[13px] font-bold tracking-[-0.02em]">drag sample</span>
+          <span className="whitespace-nowrap text-[13px] font-bold tracking-[-0.02em]">drag sample</span>
           <span className="ml-auto text-[9px] opacity-50">.wav</span>
         </button>
         <button

@@ -67,11 +67,11 @@ export function RecordPanel({ s, onToggle }: { s: UiState; onToggle: () => void 
       <div className="flex min-w-0 flex-1 flex-col gap-2 text-[11px] tabular-nums">
         <div className="flex items-baseline justify-between">
           <span className={`text-[15px] font-semibold ${rec ? 'text-white' : 'text-white/35'}`}>{fmt(rec ? s.recordTime : 0)}</span>
-          <span className="text-[10px] text-white/30">max {fmt(MAX_RECORD_SECONDS)}</span>
+          <span className="text-[10px] text-white/30">/ {MAX_RECORD_SECONDS}s</span>
         </div>
         <LevelMeter level={lvl} active={rec} />
         <div className="flex justify-between text-[10px]">
-          <span className={rec ? 'text-white/80' : 'text-white/30'}>{rec ? 'recording… R to stop' : busy ? 'analyzing…' : 'R = record'}</span>
+          <span className={rec ? 'text-white/80' : 'text-white/30'}>{rec ? 'recording…' : busy ? 'analyzing…' : <><span className="md:hidden">tap to record</span><span className="hidden md:inline">R = record</span></>}</span>
           <span className={rec ? 'text-white/60' : 'text-white/25'}>{fmtDb(lvl)} dB</span>
         </div>
       </div>

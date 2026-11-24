@@ -18,7 +18,7 @@ export function StatusBar({ s, actions }: { s: UiState; actions: Actions }) {
       ].filter(Boolean)
     : ['no sample'];
   return (
-    <footer className="relative z-10 flex h-6 shrink-0 items-center justify-between border-t border-white/[0.07] bg-ash-950/80 px-4 text-[10px] text-white/35">
+    <footer className="relative z-10 flex min-h-6 shrink-0 items-center justify-between border-t py-1 border-white/[0.07] bg-ash-950/80 px-4 text-[10px] text-white/35">
       <div className="flex items-center gap-3">
         <span className="flex items-center gap-1.5">
           <span
@@ -48,7 +48,7 @@ export function StatusBar({ s, actions }: { s: UiState; actions: Actions }) {
           )}
         </label>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="hidden items-center gap-2 md:flex">
         {items.map((t, i) => (
           <span key={i} className="flex items-center gap-2">
             {i > 0 && <span className="text-white/15">│</span>}

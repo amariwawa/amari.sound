@@ -59,16 +59,17 @@ function CommandLine({ s }: { s: UiState }) {
 export function Header({ s }: { s: UiState }) {
   const ai = s.aiStatus;
   return (
-    <header className="relative z-20 flex h-14 shrink-0 items-center gap-6 border-b border-white/[0.07] bg-ash-900/80 px-5">
+    <header className="relative z-20 flex h-14 shrink-0 items-center gap-3 border-b md:gap-6 border-white/[0.07] bg-ash-900/80 px-5">
       <div className="flex shrink-0 items-baseline gap-2">
         <span className="text-[20px] font-bold leading-none tracking-[-0.06em] text-white [text-shadow:0_0_18px_rgba(255,255,255,0.35)]">
           amarisound
         </span>
-        <span className="rounded-[3px] border border-white/15 px-1 py-px text-[9px] text-white/40">sample analyzer</span>
+        <span className="hidden rounded-[3px] border border-white/15 px-1 py-px text-[9px] text-white/40 sm:inline">sample analyzer</span>
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="hidden min-w-0 flex-1 md:block">
         <CommandLine s={s} />
       </div>
+      <div className="flex-1 md:hidden" />
       <div
         title="Basic Pitch neural network — refines key detection"
         className="flex shrink-0 items-center gap-1.5 rounded-[3px] border border-white/10 px-2 py-1 text-[9px] tracking-[0.08em] text-white/50"

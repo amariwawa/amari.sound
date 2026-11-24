@@ -11,7 +11,7 @@ function Btn({ on, onClick, children, title, disabled, primary }: {
       onClick={onClick}
       title={title}
       disabled={disabled}
-      className={`flex h-[20px] items-center gap-1 rounded-[3px] px-2 text-[9px] font-semibold tracking-[0.06em] transition-all disabled:cursor-not-allowed disabled:opacity-30 ${
+      className={`flex h-8 items-center gap-1 rounded-[3px] px-2.5 text-[11px] md:h-[20px] md:px-2 md:text-[9px] font-semibold tracking-[0.06em] transition-all disabled:cursor-not-allowed disabled:opacity-30 ${
         primary
           ? on
             ? 'bg-white text-black shadow-[0_0_12px_rgba(255,255,255,0.5)]'
@@ -65,13 +65,13 @@ export function Waveform({ s, actions }: { s: UiState; actions: Actions }) {
   const dense = grid.length > 0 && w / grid.length < 6;
 
   return (
-    <div className="relative h-full rounded-[6px] border border-white/[0.08] bg-ash-950/60">
-      <div className="absolute left-3 top-2 z-10 text-[9px] tracking-[0.1em] text-white/35">
+    <div className="relative flex h-full flex-col rounded-[6px] border border-white/[0.08] bg-ash-950/60 md:block">
+      <div className="z-10 px-3 pt-2 text-[9px] tracking-[0.1em] text-white/35 md:absolute md:left-3 md:top-2 md:p-0">
         <span className="text-white/20">// </span>waveform{g ? ' · beat grid' : ''}
         {s.fx.reverse && <span className="ml-2 text-white">reversed</span>}
         {s.fx.halftime && <span className="ml-2 text-white">½ time</span>}
       </div>
-      <div className="absolute right-2 top-1.5 z-10 flex items-center gap-1">
+      <div className="z-10 flex flex-wrap items-center gap-1 px-3 pt-2 md:absolute md:right-2 md:top-1.5 md:flex-nowrap md:p-0">
         <Btn on={s.fx.reverse} onClick={() => actions.setFx({ ...s.fx, reverse: !s.fx.reverse })} title="Reverse the sample" disabled={!sample || busy}>
           ⇄ rev
         </Btn>
@@ -84,7 +84,7 @@ export function Waveform({ s, actions }: { s: UiState; actions: Actions }) {
           ½ time
         </Btn>
         {s.fx.halftime && (
-          <div className="flex h-[20px] overflow-hidden rounded-[3px] border border-white/20 text-[9px]" title="Halftime loop length">
+          <div className="flex h-8 overflow-hidden rounded-[3px] border border-white/20 text-[11px] md:h-[20px] md:text-[9px]" title="Halftime loop length">
             {([1, 2, 4, 8] as const).map((b) => (
               <button
                 key={b}
@@ -98,7 +98,7 @@ export function Waveform({ s, actions }: { s: UiState; actions: Actions }) {
             ))}
           </div>
         )}
-        <span className="mx-0.5 h-3 w-px bg-white/15" />
+        <span className="mx-0.5 hidden h-3 w-px bg-white/15 md:block" />
         <Btn on={s.loop} onClick={() => actions.setLoop(!s.loop)} title="Loop playback" disabled={!sample}>
           loop
         </Btn>
@@ -112,7 +112,7 @@ export function Waveform({ s, actions }: { s: UiState; actions: Actions }) {
 
       <div
         ref={ref}
-        className={`absolute inset-x-3 bottom-3 top-8 ${sample ? 'cursor-text' : ''}`}
+        className={`relative mx-3 mb-3 mt-2 h-[96px] md:absolute md:inset-x-3 md:bottom-3 md:top-8 md:m-0 md:h-auto ${sample ? 'cursor-text' : ''}`}
         onClick={(e) => {
           if (!sample) return;
           const r = e.currentTarget.getBoundingClientRect();
@@ -156,7 +156,7 @@ export function Waveform({ s, actions }: { s: UiState; actions: Actions }) {
         )}
         {(s.state === 'analyzing' || s.state === 'processing') && <div className="amari-sweep pointer-events-none absolute inset-0" />}
       </div>
-      <div className="pointer-events-none absolute bottom-2 right-2 z-10 w-[300px]">
+      <div className="pointer-events-none absolute bottom-2 right-2 z-10 w-[min(300px,calc(100%-16px))]">
         <Console state={s} />
       </div>
     </div>

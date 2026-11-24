@@ -67,36 +67,42 @@ export default function App() {
   }, [loadFile]);
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center gap-5 p-8">
+    <div className="flex min-h-full flex-col items-center justify-center gap-5 md:p-8">
       <div
-        className="amari-dots relative flex h-[560px] w-[900px] select-none flex-col overflow-hidden rounded-[10px] border border-white/[0.09] bg-panel
+        className="amari-dots relative flex min-h-[100dvh] w-full select-none flex-col overflow-hidden bg-panel md:h-[560px] md:min-h-0 md:w-[900px] md:rounded-[10px] md:border md:border-white/[0.09]
                    shadow-[0_50px_120px_-30px_rgba(0,0,0,0.75),0_0_0_1px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]"
       >
         <Header s={s} />
-        <div className="flex min-h-0 flex-1">
-          <aside className="flex w-[248px] shrink-0 flex-col gap-4 border-r border-white/[0.07] bg-ash-900/70 p-4">
+        <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+          <aside className="flex w-full shrink-0 flex-col gap-4 border-b border-white/[0.07] bg-ash-900/70 p-4 md:w-[248px] md:border-b-0 md:border-r">
             <RecordPanel s={s} onToggle={toggleRecord} />
             <SourcePanel s={s} actions={amari} />
-            <div className="flex-1" />
-            <ExportPanel s={s} actions={amari} />
+            <div className="hidden flex-1 md:block" />
+            <div className="hidden md:block">
+              <ExportPanel s={s} actions={amari} />
+            </div>
           </aside>
           <main className="flex min-w-0 flex-1 flex-col gap-2.5 p-4">
-            <div className="h-[112px] shrink-0">
+            <div className="shrink-0 md:h-[112px]">
               <Waveform s={s} actions={amari} />
             </div>
             {s.view === 'stems' ? (
-              <div className="min-h-0 flex-1">
+              <div className="min-h-[300px] flex-1 md:min-h-0">
                 <StemsPanel s={s} actions={amari} />
               </div>
             ) : (
               <>
-                <div className="flex h-[176px] shrink-0 gap-2.5">
+                <div className="flex shrink-0 flex-col gap-2.5 md:h-[176px] md:flex-row">
                   <BpmCard s={s} actions={amari} />
                   <KeyCard s={s} actions={amari} />
                 </div>
                 <CompatibleKeys s={s} actions={amari} />
               </>
             )}
+            {/* on phones the export controls come after the results */}
+            <div className="border-t border-white/[0.07] pt-4 md:hidden">
+              <ExportPanel s={s} actions={amari} />
+            </div>
           </main>
         </div>
         <StatusBar s={s} actions={amari} />
@@ -112,7 +118,7 @@ export default function App() {
         )}
       </div>
 
-      <p className="text-[11px] tracking-wide text-white/25">
+      <p className="hidden text-[11px] tracking-wide text-white/25 md:block">
         <span className="text-white/50">space</span> play/stop · <span className="text-white/50">R</span> record · drop a file anywhere
       </p>
     </div>
