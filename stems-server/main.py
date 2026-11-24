@@ -3,11 +3,11 @@ amarisound stem API (FastAPI) — runs locally (uvicorn, port 8765) and on Verce
 
   GET  /api/health
   POST /api/stems?ctx_l=<samples>&ctx_r=<samples>
-       body: raw little-endian int16, interleaved stereo, 44.1 kHz, <= 7.8 s (incl. context)
+       body: raw little-endian int16, interleaved stereo, 44.1 kHz, <= 4 s (incl. context)
        returns: application/octet-stream — the 4 stems (X-Stems order), each int16 interleaved
                 stereo, with ctx_l/ctx_r context samples trimmed off; X-Frames = frames per stem.
 
-Chunks stay small (~1.2 MB in, ~3.6 MB out) to fit serverless request/response limits.
+Chunks stay small (~0.7 MB in, ~1.8 MB out; ~840 MB peak memory) to fit serverless limits.
 """
 import numpy as np
 from fastapi import FastAPI, HTTPException, Request, Response

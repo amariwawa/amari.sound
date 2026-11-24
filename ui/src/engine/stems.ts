@@ -4,17 +4,17 @@
  * Same-origin `/api` everywhere: on Vercel it is the "stems" service, locally Vite proxies it to
  * the uvicorn server on 127.0.0.1:8765. Override with VITE_STEM_API.
  *
- * Audio is sent in 5 s chunks with 1 s of context on each side (the model sees ≤ 7.8 s), so every
- * request stays far below serverless body limits and time limits. Chunks are stitched back with a
+ * Audio is sent in 2.5 s chunks with 0.74 s of context on each side (the model sees ≤ 4 s — the
+ * server's exported segment), so every request stays far below serverless body/time/memory limits. Chunks are stitched back with a
  * short crossfade.
  */
 export const STEM_API: string = import.meta.env.VITE_STEM_API || '/api';
 
 const SR = 44100;
-const CORE = 5 * SR;
-const CTX = 1 * SR;
+const CORE = Math.round(2.5 * SR);
+const CTX = Math.round(0.74 * SR);
 const XF = Math.round(0.02 * SR); // crossfade between chunks
-const PARALLEL = 2;
+const PARALLEL = 3;
 
 export interface StemServerHealth {
   ok: boolean;

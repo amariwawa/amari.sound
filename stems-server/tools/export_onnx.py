@@ -20,7 +20,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import dsp  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "model")
+from fractions import Fraction
+
+# Segment length the network is exported for. htdemucs was trained on 7.8 s; Demucs officially
+# allows shorter segments (`--segment`) to save memory — attention cost grows with length².
+SEGMENT = Fraction(os.environ.get("SEGMENT", "4"))
 m = get_model("htdemucs").models[0].eval()
+m.segment = SEGMENT
 L = int(m.segment * m.samplerate)
 S = len(m.sources)
 
