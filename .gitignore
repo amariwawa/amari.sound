@@ -13,3 +13,6 @@ __pycache__/
 # local env
 .env
 .env.*
+
+# plugin build config (public API URL only — not a secret)
+!ui/.env.plugin

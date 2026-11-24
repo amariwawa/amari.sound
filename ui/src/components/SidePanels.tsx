@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import type { Actions, UiState } from '../state';
 import { exportName, infoText } from '../state';
 import { Label } from './ui';
+import { ExportButton } from './ExportButton';
 
 const ACCEPT = 'audio/*,.wav,.mp3,.aif,.aiff,.flac,.m4a,.ogg';
 const fmtDur = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}` : `${s.toFixed(2)}s`);
@@ -74,12 +75,10 @@ export function ExportPanel({ s, actions }: { s: UiState; actions: Actions }) {
         {ready ? name : '—'}
       </div>
       <div className="flex gap-2">
-        <button
-          draggable={ready}
+        <ExportButton
           disabled={!ready}
-          onDragStart={(e) => actions.exportSample(e.dataTransfer)}
-          onClick={() => actions.exportSample()}
-          title="Drag into your DAW or Finder (click to download) — renamed with key + BPM"
+          onExport={actions.exportSample}
+          title="Drag into your DAW or Finder (click to save) — renamed with key + BPM"
           className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-[4px] bg-white px-3 text-black transition-all
                      enabled:cursor-grab enabled:hover:shadow-[0_0_24px_rgba(255,255,255,0.35)] active:cursor-grabbing
                      disabled:cursor-not-allowed disabled:bg-white/[0.06] disabled:text-white/25"
@@ -89,7 +88,7 @@ export function ExportPanel({ s, actions }: { s: UiState; actions: Actions }) {
           </svg>
           <span className="whitespace-nowrap text-[13px] font-bold tracking-[-0.02em]">drag sample</span>
           <span className="ml-auto text-[9px] opacity-50">.wav</span>
-        </button>
+        </ExportButton>
         <button
           disabled={!ready}
           onClick={async () => {

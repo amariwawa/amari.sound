@@ -10,7 +10,8 @@
     "stems:setup": "sh ../stems-server/setup.sh",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:plugin": "tsc --noEmit && vite build --mode plugin"
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "^5.3.0",

@@ -9,7 +9,8 @@
  *   original ─► fx (reverse / halftime) ─► playback · waveform · export
  *   original ─► 44.1k stereo WAV ─► local Demucs server ─► vocals / drums / bass / other (+ same fx)
  */
-import { MAX_RECORD_SECONDS, type Bridge, type BridgeEventMap } from '../bridge';
+import { MAX_RECORD_SECONDS, type Bridge, type BridgeEventMap, type ExportTarget } from '../bridge';
+import { callNative, inPlugin, mirrorLogToNative, toBase64 } from '../engine/native';
 import type { AiStatus, Analysis, EngineState, Fx, OutputState, PlayOptions, SampleInfo, Snapshot, StemName, StemsState } from '../types';
 import { STEM_ORDER } from '../types';
 import { NO_FX, applyFx, fxActive, fxKey, type FxGrid } from '../engine/fx';
@@ -73,6 +74,8 @@ export class SamplerBridge implements Bridge {
   });
 
   constructor() {
+    mirrorLogToNative((cb) => this.em.on('log', cb));
+    if (inPlugin) setTimeout(() => void this.selfTest(), 1500);
     // Browsers start audio locked until the user interacts. Create/unlock the engine on the very
     // first click or key press, so a dropped file can always be played.
     const unlock = () => {
@@ -223,13 +226,13 @@ export class SamplerBridge implements Bridge {
     }
   }
 
-  exportSample(filename: string, dataTransfer?: DataTransfer) {
-    if (this.buffer) this.writeWav(this.buffer, filename, dataTransfer);
+  exportSample(filename: string, target?: ExportTarget) {
+    if (this.buffer) void this.writeWav(this.buffer, filename, target);
   }
 
-  exportStem(stem: StemName, filename: string, dataTransfer?: DataTransfer) {
+  exportStem(stem: StemName, filename: string, target?: ExportTarget) {
     const buf = this.stemBuffer(stem);
-    if (buf) this.writeWav(buf, filename, dataTransfer);
+    if (buf) void this.writeWav(buf, filename, target);
   }
 
   async setFx(fx: Fx, grid: FxGrid | null) {
@@ -253,6 +256,7 @@ export class SamplerBridge implements Bridge {
 
   async checkStems() {
     const h = await stemHealth(15000); // serverless cold starts can take a few seconds
+    if (inPlugin) this.log(h ? `  stem api reachable · ${h.model} · ${h.engine}` : '! stem api unreachable from the plugin')
     if (this.stems.status === 'separating') return;
     if (!h) this.setStems({ status: 'offline', message: undefined });
     else if (this.stems.status !== 'done' || this.stems.sampleId !== this.sample?.id)
@@ -323,7 +327,23 @@ export class SamplerBridge implements Bridge {
     this.em.emit('stems', this.stems);
   }
 
-  private writeWav(buf: AudioBuffer, filename: string, dataTransfer?: DataTransfer) {
+  private async writeWav(buf: AudioBuffer, filename: string, target?: ExportTarget) {
+    if (inPlugin) {
+      // inside the DAW: write the file natively, then drag it out or show it in Finder / Explorer
+      const path = await callNative<string | null>('saveFile', filename, toBase64(encodeWav(buf)));
+      if (!path) {
+        this.log(`! could not save ${filename}`);
+        return;
+      }
+      if (target === 'drag' && (await callNative<boolean>('dragFile', path))) {
+        this.log(`$ amari export ${filename}  (drop it on a track)`);
+        return;
+      }
+      await callNative('revealFile', path);
+      this.log(`$ amari export → ${path}  (drag it from the folder into your DAW)`);
+      return;
+    }
+    const dataTransfer = target instanceof DataTransfer ? target : undefined;
     const url = URL.createObjectURL(new Blob([encodeWav(buf) as Uint8Array<ArrayBuffer>], { type: 'audio/wav' }));
     if (dataTransfer) {
       dataTransfer.effectAllowed = 'copy';
@@ -341,6 +361,23 @@ export class SamplerBridge implements Bridge {
 
   on<K extends keyof BridgeEventMap>(event: K, cb: (payload: BridgeEventMap[K]) => void) {
     return this.em.on(event, cb);
+  }
+
+  /** Plugin diagnostics (AMARI_SELFTEST_FILE): load a file, analyse it, play it, report. */
+  private async selfTest() {
+    const b64 = await callNative<string | null>('selfTestFile').catch(() => null);
+    if (!b64) return;
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    this.log('  selftest: loading sample');
+    await this.loadFile(new File([bytes], 'selftest.wav'));
+    for (let i = 0; i < 100 && (!this.analysis || this.analysis.aiPending); i++) await sleep(200);
+    const a = this.analysis;
+    this.log(`  selftest: analysis ${a ? `${a.tempo.bpm} bpm · key ${keyName(a.key.ranking[0])} · ai notes ${a.aiNotes}` : 'MISSING'}`);
+    void this.play({ source: 'main', from: 0, loop: false, click: null });
+    await sleep(2000);
+    const p = this.player as unknown as { cur: { mode: string; verified: boolean } | null };
+    this.log(`  selftest: playback ${p.cur ? `${p.cur.mode} · verified=${p.cur.verified}` : 'NOT PLAYING'}`);
+    this.player.stop();
   }
 
   // ───────────── analysis ─────────────

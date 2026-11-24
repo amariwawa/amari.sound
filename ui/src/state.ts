@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { bridge } from './bridge';
+import { bridge, type ExportTarget } from './bridge';
 import type { AiStatus, Analysis, EngineState, Fx, KeyChoice, OutputState, SampleInfo, StemName, StemsState, Transport } from './types';
 import { NO_FX } from './engine/fx';
 import { camelot, keyName, keyShort } from './music';
@@ -196,7 +196,7 @@ export function useAmari() {
       },
       [playFrom],
     ),
-    exportStem: useCallback((stem: StemName, dt?: DataTransfer) => bridge.exportStem(stem, stemExportName(ref.current, stem), dt), []),
+    exportStem: useCallback((stem: StemName, t?: ExportTarget) => bridge.exportStem(stem, stemExportName(ref.current, stem), t), []),
     seek: useCallback(
       (sec: number) => {
         setS((p) => ({ ...p, cursor: sec }));
@@ -216,7 +216,7 @@ export function useAmari() {
       [setPlayOpt],
     ),
     setFocusKey: useCallback((focusKey: KeyChoice | null) => setS((p) => ({ ...p, focusKey })), []),
-    exportSample: useCallback((dt?: DataTransfer) => bridge.exportSample(exportName(ref.current), dt), []),
+    exportSample: useCallback((t?: ExportTarget) => bridge.exportSample(exportName(ref.current), t), []),
     copyInfo: useCallback(async () => {
       const text = infoText(ref.current);
       if (!text) return false;

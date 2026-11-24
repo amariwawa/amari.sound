@@ -49,17 +49,23 @@ export interface Bridge {
    * Browser: with a DataTransfer it attaches a DownloadURL (drag to Finder/DAW); without one it downloads.
    * JUCE: native external file drag.
    */
-  exportSample(filename: string, dataTransfer?: DataTransfer): void;
+  exportSample(filename: string, target?: ExportTarget): void;
   /** Is the stem separator reachable? */
   checkStems(): Promise<void>;
   /** Split the current (original) sample into vocals / drums / bass / other. */
   splitStems(): Promise<void>;
   /** Export one stem (with current fx applied) as WAV. */
-  exportStem(stem: StemName, filename: string, dataTransfer?: DataTransfer): void;
+  exportStem(stem: StemName, filename: string, target?: ExportTarget): void;
   on<K extends keyof BridgeEventMap>(event: K, cb: (payload: BridgeEventMap[K]) => void): () => void;
 }
 
 export const MAX_RECORD_SECONDS = 60;
+
+/**
+ * Where an export goes. Browser: a DataTransfer (HTML drag) or nothing (download).
+ * Plugin: 'drag' starts a native file drag into the DAW; nothing saves + reveals the file.
+ */
+export type ExportTarget = DataTransfer | 'drag';
 
 function createBridge(): Bridge {
   // Stage 4: if (window.__JUCE__) return new JuceBridge();

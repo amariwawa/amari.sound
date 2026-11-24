@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { Actions, UiState } from '../state';
 import { stemExportName } from '../state';
 import { STEM_ORDER, type StemInfo } from '../types';
+import { ExportButton } from './ExportButton';
 
 const LABEL: Record<string, string> = { vocals: 'vocals', drums: 'drums', bass: 'bass', other: 'melody / other' };
 
@@ -51,15 +52,13 @@ function StemRow({ st, s, actions }: { st: StemInfo; s: UiState; actions: Action
           <Mini peaks={st.peaks} />
         )}
       </div>
-      <button
-        draggable
-        onDragStart={(e) => actions.exportStem(st.name, e.dataTransfer)}
-        onClick={() => actions.exportStem(st.name)}
+      <ExportButton
+        onExport={(t) => actions.exportStem(st.name, t)}
         title="Download (or drag into your DAW)"
         className="flex h-7 shrink-0 items-center gap-1.5 rounded-[4px] bg-white px-2.5 text-[10px] font-bold text-black hover:shadow-[0_0_16px_rgba(255,255,255,0.35)] active:cursor-grabbing"
       >
         ↓ wav
-      </button>
+      </ExportButton>
     </div>
   );
 }
