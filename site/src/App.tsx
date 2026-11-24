@@ -199,7 +199,7 @@ function AssetRow({ a }: { a: Asset }) {
         </a>
       ) : (
         <span className="shrink-0 rounded-[5px] border border-dashed border-white/20 px-4 py-3 text-center text-[11px] text-white/40" title="This build hasn't been published yet">
-          build pending
+          coming soon
         </span>
       )}
     </div>

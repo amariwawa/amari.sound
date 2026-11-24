@@ -1,8 +1,9 @@
 /**
  * Single source of truth for the download page.
  *
- * To publish a build: put the file in site/public/downloads/ (or point `url` at your CDN /
- * GitHub release), fill in `size` + `sha256`, and set `available: true`.
+ * Files are published as GitHub Release assets (.github/workflows/plugin.yml on a v* tag, or
+ * plugin/scripts/package-*.sh + `gh release upload`). Names are version-independent so the
+ * "latest" links always point at the newest release. Set `available: true` once uploaded.
  */
 export type OS = 'mac' | 'windows' | 'linux';
 
@@ -23,33 +24,38 @@ export const VERSION = '0.2.0';
 export const CHANNEL = 'beta';
 export const RELEASE_DATE = 'November 2026';
 
-const dl = (file: string) => `/downloads/${file}`;
+export const RELEASES_URL = 'https://github.com/amariwawa/amari.sound/releases/latest';
+const dl = (file: string) => `${RELEASES_URL}/download/${file}`;
 
 export const ASSETS: Asset[] = [
   {
     os: 'mac',
     kind: 'installer',
     label: 'macOS installer',
-    file: `amarisound-${VERSION}-macOS.pkg`,
-    url: dl(`amarisound-${VERSION}-macOS.pkg`),
+    file: 'amarisound-macOS.pkg',
+    url: dl('amarisound-macOS.pkg'),
     formats: ['VST3', 'AU', 'Standalone app'],
-    available: false,
+    size: '16.4 MB',
+    sha256: '11547a1da7257a5dc4c4a9387addb81b6b2be561a513ef2bccad2568b19e82ac',
+    available: true,
   },
   {
     os: 'mac',
     kind: 'archive',
     label: 'macOS manual install (.zip)',
-    file: `amarisound-${VERSION}-macOS.zip`,
-    url: dl(`amarisound-${VERSION}-macOS.zip`),
+    file: 'amarisound-macOS.zip',
+    url: dl('amarisound-macOS.zip'),
     formats: ['VST3', 'AU', 'Standalone app'],
-    available: false,
+    size: '16.4 MB',
+    sha256: '6b1d267e3f1b5f12664bfcede134fc178989d33a8112a386a6192757a8b72582',
+    available: true,
   },
   {
     os: 'windows',
     kind: 'installer',
     label: 'Windows installer',
-    file: `amarisound-${VERSION}-Windows-x64-Setup.exe`,
-    url: dl(`amarisound-${VERSION}-Windows-x64-Setup.exe`),
+    file: 'amarisound-Windows-x64-Setup.exe',
+    url: dl('amarisound-Windows-x64-Setup.exe'),
     formats: ['VST3', 'Standalone app'],
     available: false,
   },
@@ -57,8 +63,8 @@ export const ASSETS: Asset[] = [
     os: 'windows',
     kind: 'archive',
     label: 'Windows manual install (.zip)',
-    file: `amarisound-${VERSION}-Windows-x64.zip`,
-    url: dl(`amarisound-${VERSION}-Windows-x64.zip`),
+    file: 'amarisound-Windows-x64.zip',
+    url: dl('amarisound-Windows-x64.zip'),
     formats: ['VST3', 'Standalone app'],
     available: false,
   },
@@ -66,8 +72,8 @@ export const ASSETS: Asset[] = [
     os: 'linux',
     kind: 'archive',
     label: 'Linux (.tar.gz)',
-    file: `amarisound-${VERSION}-Linux-x86_64.tar.gz`,
-    url: dl(`amarisound-${VERSION}-Linux-x86_64.tar.gz`),
+    file: 'amarisound-Linux-x86_64.tar.gz',
+    url: dl('amarisound-Linux-x86_64.tar.gz'),
     formats: ['VST3', 'Standalone app'],
     available: false,
   },

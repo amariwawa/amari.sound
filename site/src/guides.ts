@@ -4,28 +4,29 @@ import type { OS } from './releases';
 export const INSTALL_STEPS: Record<OS, { installer: string[]; manual: string[] }> = {
   mac: {
     installer: [
-      'Open amarisound-…-macOS.pkg and follow the steps.',
+      'Open amarisound-macOS.pkg. If macOS says it can’t check it: right-click the file → Open → Open (or System Settings → Privacy & Security → Open Anyway).',
       'Keep VST3, AU and Standalone ticked (untick anything you don’t want).',
       'Enter your Mac password when asked — plug-ins go into the system Plug-Ins folder.',
       'Restart your DAW (or rescan plug-ins) and amarisound shows up.',
     ],
     manual: [
-      'Unzip amarisound-…-macOS.zip.',
+      'Unzip amarisound-macOS.zip.',
       'Finder → Go → Go to Folder…, paste /Library/Audio/Plug-Ins/VST3 and drop amarisound.vst3 there.',
       'For Logic / GarageBand: drop amarisound.component into /Library/Audio/Plug-Ins/Components.',
       'Drag amarisound.app into Applications for the standalone version.',
+      'Downloaded files are quarantined by macOS — in Terminal run: xattr -dr com.apple.quarantine /Library/Audio/Plug-Ins/VST3/amarisound.vst3 /Library/Audio/Plug-Ins/Components/amarisound.component /Applications/amarisound.app',
       'Restart your DAW.',
     ],
   },
   windows: {
     installer: [
-      'Run amarisound-…-Windows-x64-Setup.exe.',
+      'Run amarisound-Windows-x64-Setup.exe.',
       'If SmartScreen appears: “More info” → “Run anyway”.',
       'Keep the default VST3 folder: C:\\Program Files\\Common Files\\VST3.',
       'Restart your DAW (or rescan plug-ins).',
     ],
     manual: [
-      'Unzip amarisound-…-Windows-x64.zip.',
+      'Unzip amarisound-Windows-x64.zip.',
       'Copy amarisound.vst3 into C:\\Program Files\\Common Files\\VST3.',
       'Put the amarisound folder (standalone .exe) anywhere you like, e.g. C:\\Program Files.',
       'Restart your DAW.',
@@ -35,9 +36,8 @@ export const INSTALL_STEPS: Record<OS, { installer: string[]; manual: string[] }
     installer: [],
     manual: [
       'Install the web view dependency: sudo apt install libwebkit2gtk-4.1-0 (Fedora: sudo dnf install webkit2gtk4.1).',
-      'tar -xzf amarisound-…-Linux-x86_64.tar.gz',
-      'mkdir -p ~/.vst3 && cp -r amarisound.vst3 ~/.vst3/',
-      'Optional standalone: cp amarisound ~/.local/bin/',
+      'tar -xzf amarisound-Linux-x86_64.tar.gz && cd amarisound',
+      './install.sh  (copies the VST3 to ~/.vst3 and the app to ~/.local/bin)',
       'Rescan plug-ins in your host.',
     ],
   },
@@ -164,7 +164,7 @@ export const TROUBLESHOOTING: { q: string; a: string; os?: OS }[] = [
   {
     q: '“amarisound can’t be opened because Apple cannot check it”',
     os: 'mac',
-    a: 'Release builds are signed and notarised. For a test build: System Settings → Privacy & Security → scroll down → “Open Anyway”, or right-click the app → Open.',
+    a: 'This beta isn’t notarised by Apple yet. Right-click the .pkg (or the app) → Open → Open, or System Settings → Privacy & Security → scroll down → “Open Anyway”. Plug-ins installed by the .pkg work straight away.',
   },
   {
     q: 'Windows protected your PC (SmartScreen)',
@@ -179,6 +179,14 @@ export const TROUBLESHOOTING: { q: string; a: string; os?: OS }[] = [
     q: 'Does it work on Apple Silicon?',
     os: 'mac',
     a: 'Yes — the macOS build is Universal and runs natively on M-series Macs (no Rosetta needed).',
+  },
+  {
+    q: 'Where do exported samples and stems go?',
+    a: 'In the plugin, drag “drag sample” or a stem’s “↓ wav” straight onto a track. A click saves the file to Music/amarisound and opens that folder.',
+  },
+  {
+    q: 'Can I use it on my phone or tablet?',
+    a: 'Plug-ins only run on computers. On iPhone, iPad and Android use the web app — open amarisound.vercel.app/app in Safari or Chrome. Everything works there, including stems.',
   },
   {
     q: 'How do I use it once it’s loaded?',
