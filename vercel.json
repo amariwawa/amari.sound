@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "site": {
+      "root": "site",
+      "framework": "vite"
+    },
+    "ui": {
+      "root": "ui",
+      "framework": "vite",
+      "outputDirectory": "dist"
+    }
+  },
+  "redirects": [
+    { "source": "/app", "destination": "/app/", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/app/(.*)", "destination": { "service": "ui" } },
+    { "source": "/(.*)", "destination": { "service": "site" } }
+  ]
+}

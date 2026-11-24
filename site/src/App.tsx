@@ -92,6 +92,7 @@ function Nav() {
           <a href="#install" className="hover:text-white">install</a>
           <a href="#daw" className="hover:text-white">in your daw</a>
           <a href="#help" className="hover:text-white">help</a>
+          <a href="/app/" className="text-white hover:underline">open web app →</a>
         </div>
         <span className="ml-auto rounded-[3px] border border-white/15 px-2 py-0.5 text-[10px] text-white/50">
           v{VERSION} {CHANNEL}

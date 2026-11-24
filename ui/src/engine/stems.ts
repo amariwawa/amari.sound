@@ -1,8 +1,10 @@
 /**
  * Client for the local stem server (stems-server/server.py — Meta's Demucs "htdemucs").
- * The server binds to 127.0.0.1 only; audio never leaves the machine.
+ * By default the server runs on the user's own machine (127.0.0.1) — audio never leaves it.
+ * The hosted web app (/app on Vercel) talks to that same local server when it's running.
  */
-export const STEM_SERVER = 'http://127.0.0.1:8765';
+/** Override at build time with VITE_STEM_SERVER (e.g. a hosted stem service). */
+export const STEM_SERVER: string = import.meta.env.VITE_STEM_SERVER || 'http://127.0.0.1:8765';
 
 export interface StemServerHealth {
   ok: boolean;
