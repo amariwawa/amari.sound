@@ -10,7 +10,7 @@
  *   original ─► 44.1k stereo WAV ─► local Demucs server ─► vocals / drums / bass / other (+ same fx)
  */
 import { MAX_RECORD_SECONDS, type Bridge, type BridgeEventMap } from '../bridge';
-import type { AiStatus, Analysis, EngineState, Fx, PlayOptions, SampleInfo, Snapshot, StemName, StemsState } from '../types';
+import type { AiStatus, Analysis, EngineState, Fx, OutputState, PlayOptions, SampleInfo, Snapshot, StemName, StemsState } from '../types';
 import { STEM_ORDER } from '../types';
 import { NO_FX, applyFx, fxActive, fxKey, type FxGrid } from '../engine/fx';
 import { separate, stemHealth } from '../engine/stems';
@@ -18,7 +18,8 @@ import { keyName } from '../music';
 import { ANALYSIS_SR, detectTempo } from '../engine/tempo';
 import { analyzeKey } from '../engine/keydetect';
 import { aiBackend, preloadAi, transcribe } from '../engine/ai';
-import { encodeWav, rmsDb, tick, toAnalysisMono, toStereo44k, trimSilence, waveformPeaks } from '../engine/audio';
+import { encodeWav, rmsDb, toAnalysisMono, toStereo44k, trimSilence, waveformPeaks } from '../engine/audio';
+import { SamplePlayer } from '../engine/player';
 import { recorderWorkletUrl, type RecorderChunk } from '../engine/recorderWorklet';
 
 const AI_MAX_SECONDS = 45;
@@ -35,19 +36,6 @@ class Emitter<M extends object> {
   emit<K extends keyof M>(e: K, p: M[K]) {
     this.l.get(e)?.forEach((cb) => (cb as (p: M[K]) => void)(p));
   }
-}
-
-interface Playback {
-  buf: AudioBuffer;
-  src: AudioBufferSourceNode;
-  out: GainNode;
-  timer: number;
-  startCtx: number;
-  from: number;
-  loop: boolean;
-  click: PlayOptions['click'];
-  clickIter: number;
-  clickBeat: number;
 }
 
 let sampleSeq = 0;
@@ -76,9 +64,13 @@ export class SamplerBridge implements Bridge {
   private workletLoaded = new WeakSet<AudioContext>();
   private level = 0;
   private rec: { chunks: Float32Array[]; timer: number; t0: number } | null = null;
-  private pb: Playback | null = null;
-  private playedOnce = false;
-  private deviceChanged = false;
+  private outputs: OutputState = { supported: SamplePlayer.canChooseOutput, devices: [], current: 'default' };
+  private player = new SamplePlayer({
+    ctx: () => this.ensureCtx(),
+    position: (position) => this.em.emit('transport', { playing: true, position }),
+    stopped: () => this.em.emit('transport', { playing: false, position: 0 }),
+    log: (line) => this.log(line),
+  });
 
   constructor() {
     // Browsers start audio locked until the user interacts. Create/unlock the engine on the very
@@ -90,9 +82,10 @@ export class SamplerBridge implements Bridge {
     window.addEventListener('pointerdown', unlock, true);
     window.addEventListener('keydown', unlock, true);
     navigator.mediaDevices?.addEventListener?.('devicechange', () => {
-      this.deviceChanged = true;
       this.log('  audio devices changed');
+      void this.refreshOutputs();
     });
+    void this.refreshOutputs();
 
     preloadAi()
       .then(() => this.setAi('ready'))
@@ -110,6 +103,7 @@ export class SamplerBridge implements Bridge {
       this.log('  drop a sample or press rec');
     }, 250);
     void this.checkStems();
+    setTimeout(() => this.em.emit('outputs', this.outputs), 0);
     return {
       state: this.state, fx: this.fx, stems: this.stems,
       sample: this.sample, analysis: this.analysis, aiStatus: this.aiStatus,
@@ -119,7 +113,7 @@ export class SamplerBridge implements Bridge {
   async loadFile(file: File) {
     if (this.state !== 'idle') return;
     const ctx = this.ensureCtx();
-    this.stopPb();
+    this.player.stop();
     this.setState('analyzing');
     this.log(`$ amari load "${file.name}"`);
     try {
@@ -134,7 +128,7 @@ export class SamplerBridge implements Bridge {
   async startRecording() {
     if (this.state !== 'idle') return;
     const ctx = this.ensureCtx(); // created inside the click gesture
-    this.stopPb();
+    this.player.stop();
     this.setState('recording');
     if (!(await this.ensureMic(ctx))) {
       this.setState('idle');
@@ -188,47 +182,45 @@ export class SamplerBridge implements Bridge {
     await this.ingest(buf, `amari_rec_${String(++recSeq).padStart(2, '0')}`, 'mic');
   }
 
+  /** Starts synchronously (inside the user's click / key press) — see engine/player.ts. */
   async play(opts: PlayOptions) {
     if (!this.buffer || this.state === 'recording') return;
-    this.stopPb(false);
-    const ctx = await this.readyCtx();
-    if (!ctx) return;
     const buf = opts.source === 'main' ? this.buffer : this.stemBuffer(opts.source);
     if (!buf) {
       this.log(`! nothing to play for "${opts.source}" — split stems again`);
       return;
     }
-    if (!this.playedOnce) {
-      this.playedOnce = true;
-      this.log(`  audio out ${ctx.sampleRate} Hz · if you hear nothing, check your mac's output device / volume`);
-    }
-    this.stopPb(false);
-    const out = ctx.createGain();
-    out.connect(ctx.destination);
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.loop = opts.loop;
-    src.connect(out);
-    const from = Math.max(0, Math.min(opts.from, buf.duration - 0.01));
-    const startCtx = ctx.currentTime + 0.05;
-    src.start(startCtx, from);
-    if (!opts.loop) src.onended = () => this.pb?.src === src && this.stopPb();
-
-    const pb: Playback = {
-      buf, src, out, startCtx, from, loop: opts.loop, click: opts.click,
-      clickIter: 0, clickBeat: 0,
-      timer: window.setInterval(() => this.pbTick(), 1000 / 60),
-    };
-    if (opts.click) {
-      const spb = 60 / opts.click.bpm;
-      pb.clickBeat = Math.ceil((from - opts.click.offset) / spb - 1e-6);
-    }
-    this.pb = pb;
-    this.pbTick();
+    this.player.play({ buf, from: opts.from, loop: opts.loop, click: opts.click });
   }
 
   async stopPlayback() {
-    this.stopPb();
+    this.player.stop();
+  }
+
+  async setOutput(deviceId: string) {
+    try {
+      await this.player.setOutput(deviceId);
+      this.outputs = { ...this.outputs, current: deviceId };
+      this.em.emit('outputs', this.outputs);
+      const d = this.outputs.devices.find((x) => x.id === deviceId);
+      this.log(`  output → ${d?.label ?? deviceId}`);
+    } catch (e) {
+      this.log(`! could not switch output (${(e as Error).message})`);
+    }
+  }
+
+  private async refreshOutputs() {
+    try {
+      const list = await navigator.mediaDevices.enumerateDevices();
+      const devices = list
+        .filter((d) => d.kind === 'audiooutput')
+        .map((d, i) => ({ id: d.deviceId, label: d.label || (d.deviceId === 'default' ? 'system default' : `output ${i + 1}`) }));
+      if (!devices.some((d) => d.id === 'default')) devices.unshift({ id: 'default', label: 'system default' });
+      this.outputs = { ...this.outputs, devices };
+      this.em.emit('outputs', this.outputs);
+    } catch {
+      /* no media devices api */
+    }
   }
 
   exportSample(filename: string, dataTransfer?: DataTransfer) {
@@ -245,7 +237,7 @@ export class SamplerBridge implements Bridge {
     this.fxGrid = grid;
     this.em.emit('fx', fx);
     if (!this.original || this.state !== 'idle') return;
-    this.stopPb();
+    this.player.forget();
     this.setState('processing');
     await sleep(20);
     const t = performance.now();
@@ -347,6 +339,7 @@ export class SamplerBridge implements Bridge {
 
   private async ingest(buf: AudioBuffer, name: string, source: SampleInfo['source']) {
     const id = ++sampleSeq;
+    this.player.forget();
     this.original = buf;
     this.buffer = buf;
     if (fxActive(this.fx)) {
@@ -426,46 +419,10 @@ export class SamplerBridge implements Bridge {
     if (!this.ctx || this.ctx.state === 'closed') {
       this.ctx = new AudioContext({ latencyHint: 'interactive' });
       this.ctx.onstatechange = () => {
-        if (this.ctx?.state === 'suspended' && this.pb) this.log('! audio was paused by the system — press play again');
+        if (this.ctx?.state === 'suspended' && this.player.playing) this.log('  audio engine paused by the system');
       };
     }
     return this.ctx;
-  }
-
-  /**
-   * A running AudioContext whose clock is actually moving. If the output device changed
-   * (headphones, AirPods, interface) Chrome's context can freeze silently — detect that and
-   * rebuild the audio engine.
-   */
-  private async readyCtx(): Promise<AudioContext | null> {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const ctx = this.ensureCtx();
-      await Promise.race([ctx.resume(), sleep(800)]);
-      if (ctx.state !== 'running') {
-        this.log('! the browser is blocking audio — click anywhere on the page, then press play again');
-        return null;
-      }
-      const t0 = ctx.currentTime;
-      await sleep(150);
-      if (ctx.currentTime > t0) {
-        if (!this.playedOnce || this.deviceChanged) {
-          this.playedOnce = true;
-          this.deviceChanged = false;
-          this.log(`  audio out ${ctx.sampleRate} Hz · output latency ${Math.round(((ctx.outputLatency || ctx.baseLatency) ?? 0) * 1000)} ms`);
-        }
-        return ctx;
-      }
-      this.log('! audio output stalled (output device changed?) — restarting the audio engine');
-      this.releaseMic();
-      try {
-        await ctx.close();
-      } catch {
-        /* already closed */
-      }
-      this.ctx = null;
-    }
-    this.log("! audio output isn't responding — check System Settings → Sound → Output, then reload the page");
-    return null;
   }
 
   private releaseMic() {
@@ -510,46 +467,5 @@ export class SamplerBridge implements Bridge {
     const db = 20 * Math.log10(c.rms + 1e-9);
     this.level = Math.max(Math.max(0, Math.min(1, (db + 60) / 60)), this.level * 0.82);
     this.rec?.chunks.push(c.data);
-  }
-
-  private pbTick() {
-    const pb = this.pb;
-    const ctx = this.ctx;
-    if (!pb || !ctx || !this.buffer) return;
-    const dur = pb.buf.duration;
-    const elapsed = Math.max(0, ctx.currentTime - pb.startCtx);
-    let pos = pb.from + elapsed;
-    if (pb.loop) pos = pos % dur;
-    else if (pos >= dur) return this.stopPb();
-    this.em.emit('transport', { playing: true, position: pos });
-
-    // schedule click ticks ~200 ms ahead on the beat grid, following loop wraps
-    if (pb.click) {
-      const spb = 60 / pb.click.bpm;
-      const firstBeat = Math.ceil(-pb.click.offset / spb - 1e-6);
-      for (let guard = 0; guard < 64; guard++) {
-        const beatTime = pb.click.offset + pb.clickBeat * spb;
-        if (beatTime >= dur) {
-          if (!pb.loop) break;
-          pb.clickIter++;
-          pb.clickBeat = firstBeat;
-          continue;
-        }
-        const ctxTime = pb.startCtx + pb.clickIter * dur + beatTime - pb.from;
-        if (ctxTime > ctx.currentTime + 0.2) break;
-        if (ctxTime >= ctx.currentTime - 0.005) tick(ctx, pb.out, ctxTime, (pb.clickBeat - firstBeat) % 4 === 0);
-        pb.clickBeat++;
-      }
-    }
-  }
-
-  private stopPb(emit = true) {
-    const pb = this.pb;
-    if (!pb) return;
-    this.pb = null;
-    window.clearInterval(pb.timer);
-    try { pb.src.stop(); } catch { /* not started */ }
-    pb.out.disconnect();
-    if (emit) this.em.emit('transport', { playing: false, position: 0 });
   }
 }

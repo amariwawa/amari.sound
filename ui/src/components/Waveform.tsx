@@ -105,7 +105,7 @@ export function Waveform({ s, actions }: { s: UiState; actions: Actions }) {
         <Btn on={s.click} onClick={() => actions.setClick(!s.click)} title="Click on the detected beat — check the BPM by ear" disabled={!tempo || busy}>
           click
         </Btn>
-        <Btn primary on={playing} onClick={actions.togglePlay} title="Play / stop (Enter)" disabled={!sample || busy}>
+        <Btn primary on={playing} onClick={actions.togglePlay} title="Play / stop (Space)" disabled={!sample || busy}>
           {playing ? '■ stop' : '▶ play'}
         </Btn>
       </div>

@@ -1,8 +1,8 @@
-import type { UiState } from '../state';
+import type { Actions, UiState } from '../state';
 import { currentBpm, detectedKey } from '../state';
 import { camelot, keyName } from '../music';
 
-export function StatusBar({ s }: { s: UiState }) {
+export function StatusBar({ s, actions }: { s: UiState; actions: Actions }) {
   const st = s.state;
   const k = detectedKey(s);
   const bpm = currentBpm(s);
@@ -29,7 +29,24 @@ export function StatusBar({ s }: { s: UiState }) {
           <span className={st === 'idle' ? '' : 'text-white'}>{s.transport.playing ? 'playing' : st}</span>
         </span>
         <span className="text-white/20">│</span>
-        <span>engine: browser · ai {s.aiStatus}</span>
+        <label className="flex items-center gap-1.5" title="Where playback goes">
+          <span>out</span>
+          {s.outputs.supported && s.outputs.devices.length > 0 ? (
+            <select
+              value={s.outputs.current}
+              onChange={(e) => actions.setOutput(e.target.value)}
+              className="max-w-[170px] cursor-pointer truncate rounded-[2px] border border-white/15 bg-ash-900 px-1 text-[10px] text-white/80 outline-none hover:border-white/40"
+            >
+              {s.outputs.devices.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span className="text-white/60">system default</span>
+          )}
+        </label>
       </div>
       <div className="flex items-center gap-2">
         {items.map((t, i) => (

@@ -100,6 +100,13 @@ export interface StemsState {
   device?: string;
 }
 
+export interface OutputState {
+  /** browser can route to a chosen device (setSinkId) */
+  supported: boolean;
+  devices: { id: string; label: string }[];
+  current: string;
+}
+
 export interface PlayOptions {
   /** what to play: the (fx-processed) sample or one stem */
   source: 'main' | StemName;

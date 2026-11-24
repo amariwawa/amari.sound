@@ -6,7 +6,7 @@
  *     WAV export, stem separation via the local Demucs server (stems-server/).
  *   - JuceBridge (Stage 4): same contract over juce::WebBrowserComponent.
  */
-import type { AiStatus, Analysis, EngineState, Fx, PlayOptions, SampleInfo, Snapshot, StemName, StemsState, Transport } from './types';
+import type { AiStatus, Analysis, EngineState, Fx, OutputState, PlayOptions, SampleInfo, Snapshot, StemName, StemsState, Transport } from './types';
 import { SamplerBridge } from './bridges/web';
 
 /** Events pushed from engine → UI. */
@@ -21,6 +21,7 @@ export interface BridgeEventMap {
   aiStatus: AiStatus;
   fx: Fx;
   stems: StemsState;
+  outputs: OutputState;
   transport: Transport;
   /** Engine log line (console overlay). Lines starting with "!" are errors. */
   log: string;
@@ -41,6 +42,8 @@ export interface Bridge {
   setFx(fx: Fx, grid: { bpm: number; offset: number } | null): Promise<void>;
   play(opts: PlayOptions): Promise<void>;
   stopPlayback(): Promise<void>;
+  /** Route playback to an output device ('default' = system default). */
+  setOutput(deviceId: string): Promise<void>;
   /**
    * Hand the sample to the host as a WAV named `filename`.
    * Browser: with a DataTransfer it attaches a DownloadURL (drag to Finder/DAW); without one it downloads.

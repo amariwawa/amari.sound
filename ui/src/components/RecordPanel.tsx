@@ -71,7 +71,7 @@ export function RecordPanel({ s, onToggle }: { s: UiState; onToggle: () => void 
         </div>
         <LevelMeter level={lvl} active={rec} />
         <div className="flex justify-between text-[10px]">
-          <span className={rec ? 'text-white/80' : 'text-white/30'}>{rec ? 'recording…' : busy ? 'analyzing…' : 'space = rec'}</span>
+          <span className={rec ? 'text-white/80' : 'text-white/30'}>{rec ? 'recording… R to stop' : busy ? 'analyzing…' : 'R = record'}</span>
           <span className={rec ? 'text-white/60' : 'text-white/25'}>{fmtDb(lvl)} dB</span>
         </div>
       </div>

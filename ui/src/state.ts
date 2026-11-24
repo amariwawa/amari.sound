@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { bridge } from './bridge';
-import type { AiStatus, Analysis, EngineState, Fx, KeyChoice, SampleInfo, StemName, StemsState, Transport } from './types';
+import type { AiStatus, Analysis, EngineState, Fx, KeyChoice, OutputState, SampleInfo, StemName, StemsState, Transport } from './types';
 import { NO_FX } from './engine/fx';
 import { camelot, keyName, keyShort } from './music';
 
@@ -12,6 +12,7 @@ export interface UiState {
   aiStatus: AiStatus;
   fx: Fx;
   stems: StemsState;
+  outputs: OutputState;
   level: number;
   recordTime: number;
   transport: Transport;
@@ -37,6 +38,7 @@ const initial: UiState = {
   aiStatus: 'loading',
   fx: NO_FX,
   stems: { status: 'unknown', sampleId: null, stems: [] },
+  outputs: { supported: false, devices: [], current: 'default' },
   level: 0,
   recordTime: 0,
   transport: { playing: false, position: 0 },
@@ -124,6 +126,7 @@ export function useAmari() {
       ),
       bridge.on('fx', (fx) => patch({ fx })),
       bridge.on('stems', (stems) => patch({ stems })),
+      bridge.on('outputs', (outputs) => patch({ outputs })),
       bridge.on('analysis', (analysis) => patch({ analysis })),
       bridge.on('aiStatus', (aiStatus) => patch({ aiStatus })),
       bridge.on('transport', (transport) => patch({ transport })),
@@ -183,6 +186,7 @@ export function useAmari() {
       if (view === 'stems') void bridge.checkStems();
     }, []),
     splitStems: useCallback(() => void bridge.splitStems(), []),
+    setOutput: useCallback((id: string) => void bridge.setOutput(id), []),
     checkStems: useCallback(() => void bridge.checkStems(), []),
     playStem: useCallback(
       (stem: StemName) => {

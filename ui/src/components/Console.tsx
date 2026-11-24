@@ -3,6 +3,7 @@ import type { UiState } from '../state';
 
 const VISIBLE = 4;
 const LINGER_MS = 3500;
+const ERROR_LINGER_MS = 12000;
 
 /** Engine log overlay — streams while recording/analyzing, fades out when idle. */
 export function Console({ state }: { state: UiState }) {
@@ -10,13 +11,14 @@ export function Console({ state }: { state: UiState }) {
   const last = state.logs[state.logs.length - 1];
   const busy = state.state !== 'idle' || !!state.analysis?.aiPending;
 
+  const linger = state.logs.slice(-VISIBLE).some((l) => l.text.startsWith('!')) ? ERROR_LINGER_MS : LINGER_MS;
   useEffect(() => {
     if (!last || busy) return;
-    const id = setTimeout(() => setNow(performance.now()), LINGER_MS + 50);
+    const id = setTimeout(() => setNow(performance.now()), linger + 50);
     return () => clearTimeout(id);
-  }, [last, busy]);
+  }, [last, busy, linger]);
 
-  const show = !!last && (busy || Math.max(now, performance.now()) - last.t < LINGER_MS);
+  const show = !!last && (busy || Math.max(now, performance.now()) - last.t < linger);
   const lines = state.logs.slice(-VISIBLE);
 
   return (
@@ -29,7 +31,7 @@ export function Console({ state }: { state: UiState }) {
         <div
           key={l.id}
           className={`overflow-hidden whitespace-pre text-ellipsis [animation:amari-type_260ms_steps(24)] ${
-            l.text.startsWith('$') ? 'text-white' : l.text.startsWith('✓') ? 'font-semibold text-white' : 'text-white/50'
+            l.text.startsWith('!') ? 'font-semibold text-white' : l.text.startsWith('$') ? 'text-white' : l.text.startsWith('✓') ? 'font-semibold text-white' : 'text-white/50'
           }`}
           style={{ opacity: 0.45 + (0.55 * (i + 1)) / lines.length }}
         >

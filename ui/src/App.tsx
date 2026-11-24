@@ -14,16 +14,17 @@ export default function App() {
   const [dragging, setDragging] = useState(false);
   const depth = useRef(0);
 
-  // Space = record/stop · Enter = play/stop
+  // Space / Enter = play/stop (like every DAW) · R = record/stop
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement) return;
-      if (e.code === 'Space') {
-        e.preventDefault();
-        toggleRecord();
-      } else if (e.key === 'Enter') {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+      if (e.code === 'Space' || e.key === 'Enter') {
         e.preventDefault();
         togglePlay();
+      } else if (e.code === 'KeyR') {
+        e.preventDefault();
+        toggleRecord();
       }
     };
     window.addEventListener('keydown', onKey);
@@ -98,7 +99,7 @@ export default function App() {
             )}
           </main>
         </div>
-        <StatusBar s={s} />
+        <StatusBar s={s} actions={amari} />
         <div className="amari-scan absolute inset-0" />
 
         {dragging && (
@@ -112,7 +113,7 @@ export default function App() {
       </div>
 
       <p className="text-[11px] tracking-wide text-white/25">
-        <span className="text-white/50">space</span> rec/stop · <span className="text-white/50">enter</span> play · drop a file anywhere
+        <span className="text-white/50">space</span> play/stop · <span className="text-white/50">R</span> record · drop a file anywhere
       </p>
     </div>
   );
