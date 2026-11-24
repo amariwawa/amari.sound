@@ -26,8 +26,15 @@ app.add_middleware(
 
 
 @app.get("/api/health")
-def health():
-    return {"ok": True, "model": "htdemucs", "engine": "onnxruntime", "segment_seconds": separator.SEGMENT / separator.SAMPLE_RATE}
+def health(deep: int = 0):
+    info = {"ok": True, "model": "htdemucs", "engine": "onnxruntime", "segment_seconds": separator.SEGMENT / separator.SAMPLE_RATE}
+    if deep:  # load the model too (warms the instance, surfaces load errors)
+        try:
+            separator.load()
+            info["loaded"] = True
+        except Exception as e:  # report instead of crashing so problems are diagnosable
+            info.update(ok=False, loaded=False, error=f"{type(e).__name__}: {e}"[:500])
+    return info
 
 
 @app.post("/api/stems")
@@ -44,7 +51,10 @@ async def stems(request: Request, ctx_l: int = 0, ctx_r: int = 0):
     if ctx_l < 0 or ctx_r < 0 or ctx_l + ctx_r >= n:
         raise HTTPException(400, "bad context")
     t = time.time()
-    out = separator.separate(np.ascontiguousarray(x))
+    try:
+        out = separator.separate(np.ascontiguousarray(x))
+    except Exception as e:
+        raise HTTPException(500, f"separation failed: {type(e).__name__}: {e}"[:500])
     core = slice(ctx_l, n - ctx_r)
     parts = []
     for name in separator.SOURCES:

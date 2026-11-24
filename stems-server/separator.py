@@ -47,7 +47,11 @@ def _fp32_model_path() -> str:
         return out
     here = os.path.dirname(os.path.abspath(__file__))
     code = f"import sys; sys.path.insert(0, {here!r}); import separator; separator._convert({MODEL_PATH!r}, {out!r})"
-    subprocess.run([sys.executable, "-c", code], check=True)
+    try:
+        subprocess.run([sys.executable, "-c", code], check=True, capture_output=True, timeout=120)
+    except Exception:  # some serverless runtimes can't spawn an interpreter — convert in-process
+        _convert(MODEL_PATH, out)
+        gc.collect()
     return out
 
 
