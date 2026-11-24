@@ -9,12 +9,25 @@
       "root": "ui",
       "framework": "vite",
       "outputDirectory": "dist"
+    },
+    "stems": {
+      "root": "stems-server",
+      "framework": "fastapi",
+      "entrypoint": "main:app",
+      "functions": {
+        "main.py": {
+          "maxDuration": 300,
+          "memory": 2048,
+          "excludeFiles": "{tools/**,model/_test_*.npy,.venv/**}"
+        }
+      }
     }
   },
   "redirects": [
     { "source": "/app", "destination": "/app/", "permanent": false }
   ],
   "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "stems" } },
     { "source": "/app/(.*)", "destination": { "service": "ui" } },
     { "source": "/(.*)", "destination": { "service": "site" } }
   ]

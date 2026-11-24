@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "dev:ui": "vite",
-    "stems": "../stems-server/.venv/bin/python ../stems-server/server.py",
+    "stems": "cd ../stems-server && .venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8765",
     "stems:setup": "sh ../stems-server/setup.sh",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",

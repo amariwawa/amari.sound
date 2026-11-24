@@ -85,7 +85,7 @@ export function StemsPanel({ s, actions }: { s: UiState; actions: Actions }) {
     <div className="flex h-full flex-col rounded-[6px] border border-white/[0.08] bg-ash-950/40 p-3.5">
       <div className="mb-3 flex items-baseline justify-between text-[9px] tracking-[0.1em] text-white/40">
         <span>
-          <span className="text-white/20">// </span>stem splitter · demucs ai{st.device ? ` · ${st.device}` : ''}
+          <span className="text-white/20">// </span>stem splitter · demucs ai
         </span>
         <button onClick={() => actions.setView('analysis')} className="text-white/60 hover:text-white">
           ← back to analysis
@@ -96,11 +96,10 @@ export function StemsPanel({ s, actions }: { s: UiState; actions: Actions }) {
         <Center title="no sample loaded" sub="drop a file or record something first" />
       ) : st.status === 'offline' || st.status === 'unknown' ? (
         <Center
-          title={st.status === 'unknown' ? 'checking stem server…' : 'stem server is not running'}
+          title={st.status === 'unknown' ? 'checking stem service…' : 'stem service unreachable'}
           sub={
             <>
-              one-time setup: <code className="text-white">npm run stems:setup</code> · then restart with{' '}
-              <code className="text-white">npm run dev</code>
+              check your connection and retry · running locally? start everything with <code className="text-white">npm run dev</code> in ui/
             </>
           }
           action={st.status === 'offline' ? { label: 'retry', onClick: actions.checkStems } : undefined}
@@ -114,7 +113,7 @@ export function StemsPanel({ s, actions }: { s: UiState; actions: Actions }) {
             </div>
           ))}
           <div className="mt-1 text-center text-[10px] text-white/50">
-            separating… {elapsed.toFixed(1)}s{st.message ? ` · ${st.message}` : ''} · runs on this mac, nothing is uploaded
+            separating… {Math.round((st.progress ?? 0) * 100)}% · {elapsed.toFixed(0)}s{st.message ? ` · ${st.message}` : ''}
           </div>
         </div>
       ) : st.status === 'done' && fresh ? (
@@ -134,7 +133,7 @@ export function StemsPanel({ s, actions }: { s: UiState; actions: Actions }) {
       ) : (
         <Center
           title={st.status === 'error' ? 'separation failed' : 'split this sample into stems'}
-          sub={st.status === 'error' ? st.message ?? 'unknown error' : 'vocals · drums · bass · melody — usually 5–30 s, all on this mac'}
+          sub={st.status === 'error' ? st.message ?? 'unknown error' : 'vocals · drums · bass · melody — about 10 s per 5 s of audio'}
           action={{ label: st.status === 'error' ? 'try again' : '⑂ split stems', onClick: actions.splitStems, primary: true }}
         />
       )}

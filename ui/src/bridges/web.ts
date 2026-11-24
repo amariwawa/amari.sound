@@ -252,33 +252,41 @@ export class SamplerBridge implements Bridge {
   }
 
   async checkStems() {
-    const h = await stemHealth();
+    const h = await stemHealth(15000); // serverless cold starts can take a few seconds
     if (this.stems.status === 'separating') return;
     if (!h) this.setStems({ status: 'offline', message: undefined });
     else if (this.stems.status !== 'done' || this.stems.sampleId !== this.sample?.id)
-      this.setStems({ status: 'ready', device: h.device, message: undefined });
+      this.setStems({ status: 'ready', device: h.engine, message: undefined });
   }
 
   async splitStems() {
     const orig = this.original;
     const id = this.sample?.id ?? null;
     if (!orig || this.stems.status === 'separating') return;
-    const h = await stemHealth();
+    this.setStems({ status: 'separating', sampleId: id, stems: [], progress: 0, message: 'connecting…' });
+    const h = await stemHealth(20000); // generous: first request may hit a cold start
     if (!h) {
-      this.setStems({ status: 'offline' });
-      this.log('! stem server offline — run: npm run stems:setup (once), then npm run dev');
+      this.setStems({ status: 'offline', message: undefined });
+      this.log('! stem service unreachable — locally run `npm run dev` in ui/ (it starts the stem server)');
       return;
     }
-    this.setStems({ status: 'separating', sampleId: id, stems: [], message: h.loaded ? undefined : 'loading model…', device: h.device });
-    this.log(`$ amari stems --model ${h.model} --device ${h.device}`);
+    this.setStems({ device: h.engine, message: undefined });
+    this.log(`$ amari stems --model ${h.model} --engine ${h.engine}`);
     try {
-      const wav = encodeWav(await toStereo44k(orig));
-      const res = await separate(wav);
+      const st44 = await toStereo44k(orig);
+      const res = await separate(st44.getChannelData(0), st44.getChannelData(1), (done, total) =>
+        this.setStems({ progress: total ? done / total : 0, message: `${done}/${total} chunks` }),
+      );
       if (this.sample?.id !== id) return;
       const ctx = this.ensureCtx();
       this.stemOriginal.clear();
       this.stemCache.clear();
-      for (const st of res.stems) this.stemOriginal.set(st.name as StemName, await ctx.decodeAudioData(st.data));
+      for (const [name, [l, r]] of res.stems) {
+        const b = ctx.createBuffer(2, l.length, 44100);
+        b.copyToChannel(l as Float32Array<ArrayBuffer>, 0);
+        b.copyToChannel(r as Float32Array<ArrayBuffer>, 1);
+        this.stemOriginal.set(name as StemName, b);
+      }
       // shared scale so a quiet stem looks quiet next to a loud one
       const all = STEM_ORDER.filter((n) => this.stemOriginal.has(n)).map((name) => ({ name, buf: this.stemBuffer(name)! }));
       const raw = all.map((x) => waveformPeaks(x.buf, 300, false));
@@ -289,7 +297,7 @@ export class SamplerBridge implements Bridge {
       });
       const empty = stems.filter((x) => x.empty).map((x) => x.name);
       if (empty.length) this.log(`  empty stems: ${empty.join(', ')} (not in this sample)`);
-      this.setStems({ status: 'done', sampleId: id, stems, seconds: res.seconds, message: undefined });
+      this.setStems({ status: 'done', sampleId: id, stems, seconds: res.seconds, message: undefined, progress: 1 });
       this.log(`✓ ${stems.length} stems in ${res.seconds.toFixed(1)}s`);
     } catch (e) {
       this.setStems({ status: 'error', message: (e as Error).message });

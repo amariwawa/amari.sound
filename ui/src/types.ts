@@ -97,6 +97,8 @@ export interface StemsState {
   message?: string;
   /** seconds the separation took */
   seconds?: number;
+  /** 0..1 while separating */
+  progress?: number;
   device?: string;
 }
 

@@ -11,5 +11,11 @@ export default defineConfig({
   base: onVercel ? '/app/' : './',
   build: { outDir: onVercel ? 'dist/app' : 'dist', emptyOutDir: true },
   plugins: [react(), tailwindcss()],
-  server: { host: '127.0.0.1', port: 5173, strictPort: true },
+  server: {
+    host: '127.0.0.1',
+    port: 5173,
+    strictPort: true,
+    // same /api path as production (Vercel "stems" service) → local uvicorn stem server
+    proxy: { '/api': 'http://127.0.0.1:8765' },
+  },
 });
